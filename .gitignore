@@ -39,3 +39,8 @@ build/
 .env
 .env.*
 !.env.example
+
+### Nix & direnv ###
+.direnv/
+result
+result-*
