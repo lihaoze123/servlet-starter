@@ -7,7 +7,14 @@ import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
 import jakarta.servlet.annotation.WebListener;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.ibatis.logging.slf4j.Slf4jImpl;
+import org.apache.ibatis.mapping.Environment;
+import org.apache.ibatis.session.Configuration;
+import org.apache.ibatis.session.SqlSessionFactory;
+import org.apache.ibatis.session.SqlSessionFactoryBuilder;
+import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory;
 import org.example.demo.dao.UserDAO;
+import org.example.demo.mapper.UserMapper;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,11 +31,14 @@ public class AppContextListener implements ServletContextListener {
         HikariConfig config = new HikariConfig(props);
         this.ds = new HikariDataSource(config);
 
+        SqlSessionFactory sqlSessionFactory = buildSqlSessionFactory(this.ds);
+
         ServletContext ctx = sce.getServletContext();
         ctx.setAttribute("dataSource", this.ds);
-        ctx.setAttribute("userDAO", new UserDAO(this.ds));
+        ctx.setAttribute("sqlSessionFactory", sqlSessionFactory);
+        ctx.setAttribute("userDAO", new UserDAO(sqlSessionFactory));
 
-        log.info("Application context initialized with DataSource: {}", config.getJdbcUrl());
+        log.info("Application context initialized with MyBatis and DataSource: {}", config.getJdbcUrl());
     }
 
     @Override
@@ -37,6 +47,14 @@ public class AppContextListener implements ServletContextListener {
             this.ds.close();
             log.info("HikariDataSource closed");
         }
+    }
+
+    private SqlSessionFactory buildSqlSessionFactory(HikariDataSource dataSource) {
+        Environment environment = new Environment("default", new JdbcTransactionFactory(), dataSource);
+        Configuration configuration = new Configuration(environment);
+        configuration.setLogImpl(Slf4jImpl.class);
+        configuration.addMapper(UserMapper.class);
+        return new SqlSessionFactoryBuilder().build(configuration);
     }
 
     private Properties loadDataSourceProperties() {

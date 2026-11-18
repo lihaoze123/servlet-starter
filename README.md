@@ -2,13 +2,13 @@
 
 [![CI](https://github.com/lihaoze123/servlet-starter/actions/workflows/ci.yml/badge.svg)](https://github.com/lihaoze123/servlet-starter/actions/workflows/ci.yml)
 
-基于 Jakarta Servlet 的 Java Web 起步项目，包含 JSP 首页、JSON 用户 API、MySQL 数据访问、HikariCP 连接池，以及 Filter 和 Listener 示例。
+基于 Jakarta Servlet 的 Java Web 起步项目，包含 JSP 首页、JSON 用户 API、MySQL 数据访问、MyBatis 持久层、HikariCP 连接池，以及 Filter 和 Listener 示例。
 
 ## 技术栈
 
 - Java 25、Maven Wrapper
 - Jakarta Servlet 6.1、JSP、Jetty 12.1
-- MySQL、JDBC、HikariCP
+- MySQL、MyBatis、HikariCP
 - Jackson、Lombok、SLF4J / Logback
 
 ## 快速启动
@@ -55,8 +55,11 @@ export DB_PASSWORD='replace-with-your-local-password'
 ## API 示例
 
 ```bash
-# 列出用户
+# 列出全部用户
 curl http://localhost:8080/api/users
+
+# 分页列出用户（返回 records、total、page、size）
+curl 'http://localhost:8080/api/users?page=1&size=10'
 
 # 按 ID 查询；不存在时返回 404
 curl 'http://localhost:8080/api/users?id=1'
@@ -67,20 +70,24 @@ curl -i http://localhost:8080/api/users \
   -d '{"username":"charlie","email":"charlie@example.com"}'
 ```
 
-非法 ID、无效 JSON 或缺少用户名 / 邮箱时返回 400；未处理异常由 Filter 记录并返回通用 500 JSON 响应。
+非法 ID / 分页参数、无效 JSON 或缺少用户名 / 邮箱时返回 400；未处理异常由 Filter 记录并返回通用 500 JSON 响应。
 
 ## 项目结构
 
 ```text
 src/main/java/org/example/demo/
-├── dao/UserDAO.java                 # JDBC 查询与插入
+├── dao/UserDAO.java                 # SqlSession 会话管理与数据访问封装
 ├── filter/ApiFilter.java            # JSON、UTF-8 与异常处理
-├── listener/AppContextListener.java # 连接池初始化与关闭
+├── listener/AppContextListener.java # 连接池与 SqlSessionFactory 初始化
+├── mapper/UserMapper.java           # MyBatis Mapper 接口
+├── model/PageResult.java            # 分页响应模型
 ├── model/User.java                  # 用户模型
 └── servlet/UserServlet.java         # /api/users
 src/main/resources/
 ├── db.properties
 ├── logback.xml
+├── org/example/demo/mapper/
+│   └── UserMapper.xml               # MyBatis SQL 映射文件
 └── schema.sql
 src/main/webapp/
 ├── WEB-INF/web.xml

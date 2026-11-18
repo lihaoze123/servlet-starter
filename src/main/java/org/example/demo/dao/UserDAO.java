@@ -2,80 +2,53 @@ package org.example.demo.dao;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import org.apache.ibatis.session.SqlSession;
+import org.apache.ibatis.session.SqlSessionFactory;
+import org.example.demo.mapper.UserMapper;
+import org.example.demo.model.PageResult;
 import org.example.demo.model.User;
 
-import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
 import java.util.List;
 
 @RequiredArgsConstructor
 public class UserDAO {
     @NonNull
-    private final DataSource ds;
+    private final SqlSessionFactory sqlSessionFactory;
 
     public User getById(Integer id) {
         if (id == null) {
             return null;
         }
-        String sql = "SELECT id, username, email FROM users WHERE id = ?";
-        try (Connection conn = ds.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, id);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    return rowMapper(rs);
-                }
-            }
-            return null;
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to query user by id=" + id, e);
+        try (SqlSession session = sqlSessionFactory.openSession()) {
+            UserMapper mapper = session.getMapper(UserMapper.class);
+            return mapper.selectById(id);
         }
     }
 
     public List<User> listAll() {
-        List<User> users = new ArrayList<>();
-        String sql = "SELECT id, username, email FROM users ORDER BY id";
-        try (Connection conn = ds.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
-            while (rs.next()) {
-                users.add(rowMapper(rs));
-            }
-            return users;
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to query user list", e);
+        try (SqlSession session = sqlSessionFactory.openSession()) {
+            UserMapper mapper = session.getMapper(UserMapper.class);
+            return mapper.selectAll();
+        }
+    }
+
+    public PageResult<User> listPage(int page, int size) {
+        long offset = (long) (page - 1) * size;
+        try (SqlSession session = sqlSessionFactory.openSession()) {
+            UserMapper mapper = session.getMapper(UserMapper.class);
+            long total = mapper.countAll();
+            List<User> records = total > 0 ? mapper.selectPage(offset, size) : List.of();
+            return new PageResult<>(records, total, page, size);
         }
     }
 
     public User create(User user) {
-        String sql = "INSERT INTO users (username, email) VALUES (?, ?)";
-        try (Connection conn = ds.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            stmt.setString(1, user.getUsername());
-            stmt.setString(2, user.getEmail());
-            stmt.executeUpdate();
-
-            try (ResultSet keys = stmt.getGeneratedKeys()) {
-                if (keys.next()) {
-                    return new User(keys.getInt(1), user.getUsername(), user.getEmail());
-                }
-            }
-            throw new SQLException("Creating user failed, no generated ID obtained");
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to create user", e);
+        try (SqlSession session = sqlSessionFactory.openSession()) {
+            UserMapper mapper = session.getMapper(UserMapper.class);
+            User entity = new User(null, user.getUsername(), user.getEmail());
+            mapper.insert(entity);
+            session.commit();
+            return entity;
         }
-    }
-
-    private User rowMapper(ResultSet rs) throws SQLException {
-        return new User(
-                rs.getInt("id"),
-                rs.getString("username"),
-                rs.getString("email")
-        );
     }
 }

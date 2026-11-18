@@ -11,6 +11,7 @@
 <h2>API Endpoints</h2>
 <ul>
     <li>GET <a href="${pageContext.request.contextPath}/api/users">/api/users</a> (List all users)</li>
+    <li>GET <a href="${pageContext.request.contextPath}/api/users?page=1&amp;size=10">/api/users?page=1&amp;size=10</a> (List users with pagination)</li>
     <li>GET <a href="${pageContext.request.contextPath}/api/users?id=1">/api/users?id=1</a> (Get user by ID)</li>
     <li>POST <code>/api/users</code> (JSON body: <code>{"username":"charlie","email":"charlie@example.com"}</code>)</li>
 </ul>

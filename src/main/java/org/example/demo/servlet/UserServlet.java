@@ -16,6 +16,9 @@ import java.util.Objects;
 @WebServlet(name = "userServlet", value = "/api/users")
 public class UserServlet extends HttpServlet {
     private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final int DEFAULT_PAGE = 1;
+    private static final int DEFAULT_SIZE = 10;
+    private static final int MAX_SIZE = 100;
 
     private UserDAO userDAO;
 
@@ -30,25 +33,54 @@ public class UserServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String idParam = request.getParameter("id");
-        if (idParam == null || idParam.isBlank()) {
+        if (idParam != null && !idParam.isBlank()) {
+            int id;
+            try {
+                id = Integer.parseInt(idParam);
+            } catch (NumberFormatException e) {
+                writeError(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid id");
+                return;
+            }
+
+            User user = userDAO.getById(id);
+            if (user == null) {
+                writeError(response, HttpServletResponse.SC_NOT_FOUND, "User not found");
+                return;
+            }
+            MAPPER.writeValue(response.getWriter(), user);
+            return;
+        }
+
+        String pageParam = request.getParameter("page");
+        String sizeParam = request.getParameter("size");
+        boolean hasPage = pageParam != null && !pageParam.isBlank();
+        boolean hasSize = sizeParam != null && !sizeParam.isBlank();
+
+        if (!hasPage && !hasSize) {
             MAPPER.writeValue(response.getWriter(), userDAO.listAll());
             return;
         }
 
-        int id;
+        int page = DEFAULT_PAGE;
+        int size = DEFAULT_SIZE;
         try {
-            id = Integer.parseInt(idParam);
+            if (hasPage) {
+                page = Integer.parseInt(pageParam);
+            }
+            if (hasSize) {
+                size = Integer.parseInt(sizeParam);
+            }
         } catch (NumberFormatException e) {
-            writeError(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid id");
+            writeError(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid page or size");
             return;
         }
 
-        User user = userDAO.getById(id);
-        if (user == null) {
-            writeError(response, HttpServletResponse.SC_NOT_FOUND, "User not found");
+        if (page < 1 || size < 1 || size > MAX_SIZE) {
+            writeError(response, HttpServletResponse.SC_BAD_REQUEST, "page must be >= 1 and size must be between 1 and " + MAX_SIZE);
             return;
         }
-        MAPPER.writeValue(response.getWriter(), user);
+
+        MAPPER.writeValue(response.getWriter(), userDAO.listPage(page, size));
     }
 
     @Override
