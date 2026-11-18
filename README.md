@@ -2,13 +2,13 @@
 
 [![CI](https://github.com/lihaoze123/servlet-starter/actions/workflows/ci.yml/badge.svg)](https://github.com/lihaoze123/servlet-starter/actions/workflows/ci.yml)
 
-基于 Jakarta Servlet 的 Java Web 起步项目，包含 JSP 首页、JSON 用户 API、MySQL 数据访问、MyBatis 持久层、HikariCP 连接池，以及 Filter 和 Listener 示例。
+基于 Jakarta Servlet 的 Java Web 起步项目，包含 JSP 首页、JSON 用户 API、MySQL 数据访问、MyBatis-Plus 持久层、HikariCP 连接池，以及 Filter 和 Listener 示例。
 
 ## 技术栈
 
 - Java 25、Maven Wrapper
 - Jakarta Servlet 6.1、JSP、Jetty 12.1
-- MySQL、MyBatis、HikariCP
+- MySQL、MyBatis-Plus、HikariCP
 - Jackson、Lombok、SLF4J / Logback
 
 ## 快速启动
@@ -78,16 +78,14 @@ curl -i http://localhost:8080/api/users \
 src/main/java/org/example/demo/
 ├── dao/UserDAO.java                 # SqlSession 会话管理与数据访问封装
 ├── filter/ApiFilter.java            # JSON、UTF-8 与异常处理
-├── listener/AppContextListener.java # 连接池与 SqlSessionFactory 初始化
-├── mapper/UserMapper.java           # MyBatis Mapper 接口
+├── listener/AppContextListener.java # 连接池、SqlSessionFactory 与分页插件初始化
+├── mapper/UserMapper.java           # MyBatis-Plus BaseMapper 接口
 ├── model/PageResult.java            # 分页响应模型
-├── model/User.java                  # 用户模型
+├── model/User.java                  # 用户模型（含表名与主键注解）
 └── servlet/UserServlet.java         # /api/users
 src/main/resources/
 ├── db.properties
 ├── logback.xml
-├── org/example/demo/mapper/
-│   └── UserMapper.xml               # MyBatis SQL 映射文件
 └── schema.sql
 src/main/webapp/
 ├── WEB-INF/web.xml

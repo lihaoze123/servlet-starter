@@ -1,5 +1,7 @@
 package org.example.demo.dao;
 
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.apache.ibatis.session.SqlSession;
@@ -28,17 +30,18 @@ public class UserDAO {
     public List<User> listAll() {
         try (SqlSession session = sqlSessionFactory.openSession()) {
             UserMapper mapper = session.getMapper(UserMapper.class);
-            return mapper.selectAll();
+            return mapper.selectList(Wrappers.<User>lambdaQuery().orderByAsc(User::getId));
         }
     }
 
     public PageResult<User> listPage(int page, int size) {
-        long offset = (long) (page - 1) * size;
         try (SqlSession session = sqlSessionFactory.openSession()) {
             UserMapper mapper = session.getMapper(UserMapper.class);
-            long total = mapper.countAll();
-            List<User> records = total > 0 ? mapper.selectPage(offset, size) : List.of();
-            return new PageResult<>(records, total, page, size);
+            Page<User> mpPage = mapper.selectPage(
+                    new Page<>(page, size),
+                    Wrappers.<User>lambdaQuery().orderByAsc(User::getId)
+            );
+            return new PageResult<>(mpPage.getRecords(), mpPage.getTotal(), page, size);
         }
     }
 

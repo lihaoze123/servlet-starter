@@ -1,5 +1,10 @@
 package org.example.demo.listener;
 
+import com.baomidou.mybatisplus.annotation.DbType;
+import com.baomidou.mybatisplus.core.MybatisConfiguration;
+import com.baomidou.mybatisplus.core.MybatisSqlSessionFactoryBuilder;
+import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
+import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import jakarta.servlet.ServletContext;
@@ -9,9 +14,7 @@ import jakarta.servlet.annotation.WebListener;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.logging.slf4j.Slf4jImpl;
 import org.apache.ibatis.mapping.Environment;
-import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.SqlSessionFactory;
-import org.apache.ibatis.session.SqlSessionFactoryBuilder;
 import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory;
 import org.example.demo.dao.UserDAO;
 import org.example.demo.mapper.UserMapper;
@@ -38,7 +41,7 @@ public class AppContextListener implements ServletContextListener {
         ctx.setAttribute("sqlSessionFactory", sqlSessionFactory);
         ctx.setAttribute("userDAO", new UserDAO(sqlSessionFactory));
 
-        log.info("Application context initialized with MyBatis and DataSource: {}", config.getJdbcUrl());
+        log.info("Application context initialized with MyBatis-Plus and DataSource: {}", config.getJdbcUrl());
     }
 
     @Override
@@ -51,10 +54,15 @@ public class AppContextListener implements ServletContextListener {
 
     private SqlSessionFactory buildSqlSessionFactory(HikariDataSource dataSource) {
         Environment environment = new Environment("default", new JdbcTransactionFactory(), dataSource);
-        Configuration configuration = new Configuration(environment);
+        MybatisConfiguration configuration = new MybatisConfiguration(environment);
         configuration.setLogImpl(Slf4jImpl.class);
+
+        MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
+        interceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.MYSQL));
+        configuration.addInterceptor(interceptor);
+
         configuration.addMapper(UserMapper.class);
-        return new SqlSessionFactoryBuilder().build(configuration);
+        return new MybatisSqlSessionFactoryBuilder().build(configuration);
     }
 
     private Properties loadDataSourceProperties() {

@@ -8,14 +8,14 @@
     <artifactId>servlet-starter</artifactId>
     <version>1.0-SNAPSHOT</version>
     <name>Servlet Starter</name>
-    <description>Jakarta Servlet starter with Jetty, JSP, MySQL, HikariCP and MyBatis</description>
+    <description>Jakarta Servlet starter with Jetty, JSP, MySQL, HikariCP and MyBatis-Plus</description>
     <packaging>war</packaging>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.target>25</maven.compiler.target>
         <maven.compiler.source>25</maven.compiler.source>
-        <mybatis.version>3.5.19</mybatis.version>
+        <mybatis-plus.version>3.5.18.1</mybatis-plus.version>
         <lombok.version>1.18.46</lombok.version>
         <junit.version>6.1.3</junit.version>
     </properties>
@@ -49,9 +49,14 @@
             <version>7.1.0</version>
         </dependency>
         <dependency>
-            <groupId>org.mybatis</groupId>
-            <artifactId>mybatis</artifactId>
-            <version>${mybatis.version}</version>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-extension</artifactId>
+            <version>${mybatis-plus.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-jsqlparser</artifactId>
+            <version>${mybatis-plus.version}</version>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
